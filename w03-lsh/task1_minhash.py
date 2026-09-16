@@ -30,7 +30,8 @@ BOOK_HASHES = [lambda r: (r + 1) % 5, lambda r: (3 * r + 1) % 5]
 
 def jaccard(a, b):
     """|a and b| / |a or b|. Empty union is 0, not an error."""
-    raise NotImplementedError("jaccard similarity")
+    union = set(a) | set(b)
+    return len(set(a) & set(b)) / len(union) if union else 0.0
 
 
 def minhash_signatures(columns, hashes, n_rows):
@@ -48,7 +49,19 @@ def minhash_signatures(columns, hashes, n_rows):
     written something correct that does not survive a dataset that does not fit
     in memory, and not fitting in memory is what this course is about.
     """
-    raise NotImplementedError("signature matrix")
+    if n_rows < 0:
+        raise ValueError("n_rows must be non-negative")
+    hashes = list(hashes)
+    signatures = [[n_rows] * len(hashes) for _ in columns]
+    memberships = [set(column) for column in columns]
+    for row in range(n_rows):
+        values = [h(row) for h in hashes]
+        for col, members in enumerate(memberships):
+            if row in members:
+                for h, value in enumerate(values):
+                    if value < signatures[col][h]:
+                        signatures[col][h] = value
+    return signatures
 
 
 def lsh_candidates(signatures, bands):
@@ -60,7 +73,28 @@ def lsh_candidates(signatures, bands):
     The signature length must divide evenly by `bands`, or you have to decide
     what to do with the remainder. Say what you decided.
     """
-    raise NotImplementedError("LSH candidate pairs")
+    if bands <= 0:
+        raise ValueError("bands must be positive")
+    if not signatures:
+        return set()
+    width = len(signatures[0])
+    if width == 0 or width % bands:
+        raise ValueError("signature length must divide evenly by bands")
+    if any(len(signature) != width for signature in signatures):
+        raise ValueError("all signatures must have the same length")
+    rows = width // bands
+    candidates = set()
+    for band in range(bands):
+        buckets = {}
+        start = band * rows
+        for index, signature in enumerate(signatures):
+            key = tuple(signature[start:start + rows])
+            buckets.setdefault(key, []).append(index)
+        for indices in buckets.values():
+            for pos, left in enumerate(indices):
+                for right in indices[pos + 1:]:
+                    candidates.add((min(left, right), max(left, right)))
+    return candidates
 
 
 # ------------------------------------------------------------------- harness

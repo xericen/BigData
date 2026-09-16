@@ -1,0 +1,54 @@
+{
+  "runs": [
+    {
+      "n": 250,
+      "brute_s": 0.2999763999978313,
+      "brute_calls": 31125,
+      "brute_peak_bytes": 7400,
+      "lsh_s": 1.9168405999953393,
+      "lsh_calls": 1,
+      "lsh_peak_bytes": 716680
+    },
+    {
+      "n": 500,
+      "brute_s": 2.193694100002176,
+      "brute_calls": 124750,
+      "brute_peak_bytes": 8104,
+      "lsh_s": 6.608491300008609,
+      "lsh_calls": 7,
+      "lsh_peak_bytes": 1146556
+    },
+    {
+      "n": 1000,
+      "brute_s": 9.497218399992562,
+      "brute_calls": 499500,
+      "brute_peak_bytes": 10664,
+      "lsh_s": 12.956819099999848,
+      "lsh_calls": 27,
+      "lsh_peak_bytes": 1854708
+    },
+    {
+      "n": 2000,
+      "brute_s": 40.23408280000149,
+      "brute_calls": 1999000,
+      "brute_peak_bytes": 21384,
+      "lsh_s": 23.856572999997297,
+      "lsh_calls": 111,
+      "lsh_peak_bytes": 3096580
+    },
+    {
+      "n": 4000,
+      "brute_s": 28.347482299999683,
+      "brute_calls": 2246140,
+      "brute_peak_bytes": 22312,
+      "lsh_s": 25.594743000008748,
+      "lsh_calls": 128,
+      "lsh_peak_bytes": 3162880
+    }
+  ],
+  "machine": {
+    "platform": "Windows-10-10.0.19045-SP0",
+    "processor": "Intel64 Family 6 Model 158 Stepping 9, GenuineIntel",
+    "python": "3.13.1"
+  }
+}
