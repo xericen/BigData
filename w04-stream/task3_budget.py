@@ -65,13 +65,30 @@ class YourFilter:
     """
 
     def __init__(self, n_bits, seed=246):
-        raise NotImplementedError("write your filter")
+        if n_bits <= 0:
+            raise ValueError("n_bits must be positive")
+        self.n_bits = n_bits
+        self.seed = seed
+        self.k = 7  # round((m/n) * ln(2)) for the harness's m/n = 10
+        self.bits = bytearray((n_bits + 7) // 8)
+
+    def _indexes(self, item):
+        digest = hashlib.blake2b(
+            str(item).encode("utf-8"), digest_size=16,
+            key=str(self.seed).encode("utf-8")
+        ).digest()
+        h1 = int.from_bytes(digest[:8], "big")
+        h2 = int.from_bytes(digest[8:], "big") | 1
+        for i in range(self.k):
+            yield (h1 + i * h2) % self.n_bits
 
     def add(self, item):
-        raise NotImplementedError
+        for index in self._indexes(item):
+            self.bits[index >> 3] |= 1 << (index & 7)
 
     def __contains__(self, item):
-        raise NotImplementedError
+        return all(self.bits[index >> 3] & (1 << (index & 7))
+                   for index in self._indexes(item))
 
     def memory_bits(self):
-        raise NotImplementedError
+        return len(self.bits) * 8

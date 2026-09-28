@@ -13,7 +13,7 @@ approximating.
 
     python3 task1_sketches.py --verify
 """
-import argparse, random
+import argparse, hashlib, math, random
 
 
 class BloomFilter:
@@ -28,13 +28,30 @@ class BloomFilter:
     """
 
     def __init__(self, m, k, seed=246):
-        raise NotImplementedError("write the Bloom filter")
+        if m <= 0 or k <= 0:
+            raise ValueError("m and k must be positive")
+        self.m = m
+        self.k = k
+        self.seed = seed
+        self.bits = bytearray((m + 7) // 8)
+
+    def _indexes(self, item):
+        digest = hashlib.blake2b(
+            str(item).encode("utf-8"), digest_size=16,
+            key=str(self.seed).encode("utf-8")
+        ).digest()
+        h1 = int.from_bytes(digest[:8], "big")
+        h2 = int.from_bytes(digest[8:], "big") | 1
+        for i in range(self.k):
+            yield (h1 + i * h2) % self.m
 
     def add(self, item):
-        raise NotImplementedError
+        for index in self._indexes(item):
+            self.bits[index >> 3] |= 1 << (index & 7)
 
     def __contains__(self, item):
-        raise NotImplementedError
+        return all(self.bits[index >> 3] & (1 << (index & 7))
+                   for index in self._indexes(item))
 
     def expected_fp_rate(self, n_inserted):
         """The textbook's predicted false-positive rate after n insertions.
@@ -42,7 +59,7 @@ class BloomFilter:
         §4.4.2 derives it. Return the number, do not measure it - the harness
         measures separately and compares the two.
         """
-        raise NotImplementedError
+        return (1.0 - math.exp(-self.k * n_inserted / self.m)) ** self.k
 
 
 def flajolet_martin(stream, n_hashes=64, seed=246):
@@ -67,7 +84,33 @@ def flajolet_martin(stream, n_hashes=64, seed=246):
 
     Return your estimate as a float.
     """
-    raise NotImplementedError("write Flajolet-Martin")
+    if n_hashes <= 0 or n_hashes & (n_hashes - 1):
+        raise ValueError("n_hashes must be a positive power of two")
+
+    # Stochastic averaging: one hash chooses a register and its remaining bits
+    # supply the zero run.  The harmonic mean prevents one lucky long run from
+    # dominating the estimate (the same idea used by HyperLogLog).
+    bucket_bits = n_hashes.bit_length() - 1
+    registers = [0] * n_hashes
+    key = str(seed).encode("utf-8")
+    remaining_bits = 64 - bucket_bits
+    for item in stream:
+        digest = hashlib.blake2b(str(item).encode("utf-8"), digest_size=8,
+                                 key=key).digest()
+        value = int.from_bytes(digest, "big")
+        bucket = value >> remaining_bits
+        tail = value & ((1 << remaining_bits) - 1)
+        zeros = remaining_bits if tail == 0 else (tail & -tail).bit_length() - 1
+        registers[bucket] = max(registers[bucket], zeros + 1)
+
+    m = float(n_hashes)
+    alpha = (0.673 if n_hashes == 16 else 0.697 if n_hashes == 32
+             else 0.709 if n_hashes == 64 else 0.7213 / (1 + 1.079 / m))
+    estimate = alpha * m * m / sum(2.0 ** -r for r in registers)
+    empty = registers.count(0)
+    if empty:
+        estimate = m * math.log(m / empty)
+    return estimate
 
 
 def reservoir_sample(stream, k, seed=246):
@@ -78,7 +121,18 @@ def reservoir_sample(stream, k, seed=246):
 
     Return a list of k items (or fewer if the stream was shorter).
     """
-    raise NotImplementedError("write reservoir sampling")
+    if k < 0:
+        raise ValueError("k must be non-negative")
+    rng = random.Random(seed)
+    sample = []
+    for i, item in enumerate(stream):
+        if i < k:
+            sample.append(item)
+        else:
+            replacement = rng.randrange(i + 1)
+            if replacement < k:
+                sample[replacement] = item
+    return sample
 
 
 # ------------------------------------------------------------------- harness

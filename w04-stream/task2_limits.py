@@ -13,7 +13,7 @@ record where your laptop stops coping.
 
 Your numbers will not match anybody else's. That is the point.
 """
-import argparse, json, os, platform, time, tracemalloc
+import argparse, ctypes, json, os, platform, time, tracemalloc
 
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -21,9 +21,24 @@ OUT = os.path.join(HERE, "out")
 
 
 def machine():
-    return {"platform": platform.platform(),
+    info = {"platform": platform.platform(),
             "processor": platform.processor() or platform.machine(),
             "python": platform.python_version()}
+    if platform.system() == "Windows":
+        class MemoryStatus(ctypes.Structure):
+            _fields_ = [("length", ctypes.c_ulong), ("load", ctypes.c_ulong),
+                        ("total_phys", ctypes.c_ulonglong),
+                        ("avail_phys", ctypes.c_ulonglong),
+                        ("total_page", ctypes.c_ulonglong),
+                        ("avail_page", ctypes.c_ulonglong),
+                        ("total_virtual", ctypes.c_ulonglong),
+                        ("avail_virtual", ctypes.c_ulonglong),
+                        ("avail_extended", ctypes.c_ulonglong)]
+        status = MemoryStatus()
+        status.length = ctypes.sizeof(status)
+        if ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(status)):
+            info["ram_bytes"] = status.total_phys
+    return info
 
 
 def stream(n, distinct_ratio=0.4, seed=246):
@@ -88,10 +103,12 @@ def main():
         print(line)
 
     path = os.path.join(OUT, "limits.json")
-    prior = json.load(open(path)) if os.path.exists(path) else {"runs": []}
+    with open(path, encoding="utf-8") if os.path.exists(path) else open(os.devnull) as old:
+        prior = json.load(old) if os.path.exists(path) else {"runs": []}
     prior["machine"] = machine()
     prior["runs"].extend(rows)
-    json.dump(prior, open(path, "w"), indent=2)
+    with open(path, "w", encoding="utf-8") as output:
+        json.dump(prior, output, indent=2)
     print(f"\n  -> out/limits.json  ({len(prior['runs'])} measurement(s))")
     print("  Keep raising --sizes until the exact version is unbearable. "
           "Record where, and what ran out.")
