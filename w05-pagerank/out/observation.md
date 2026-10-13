@@ -1,16 +1,16 @@
-# Week 05 observations
+# Week 05 관찰 결과
 
-## Task 1
-The broken walk loses rank when it reaches a dead end; I modelled each dead end as linking uniformly to every node, which conserves that mass.
-Uniform teleportation also lets the surfer escape a spider trap, so the same global redistribution prevents both permanent loss and permanent capture.
-Beta is the probability of following a link; with probability `1 - beta`, the surfer jumps to a uniformly selected page.
+## Task 1 · PageRank와 두 가지 실패 원인
+- 텔레포트가 없는 버전에서는 dead end에 도달한 rank가 사라져 총합이 `0.0000`이 되었지만, dead end의 rank를 모든 노드에 균등 재분배하자 총합이 `1.000000`으로 보존되었다.
+- Spider trap에서는 수정 전 C와 D가 rank의 `1.0000`을 차지했지만, 균등 텔레포트를 적용한 뒤에는 A=`0.0375`, B=`0.0694`로 trap 밖의 노드도 rank를 유지했다. 전역 재분배가 rank의 소실과 고립된 집합으로의 영구 포획을 모두 막기 때문에 같은 방법으로 두 문제를 해결할 수 있다.
+- `beta`는 링크를 따라갈 확률이며, 확률 `1 - beta`로 임의의 페이지에 균등하게 이동한다. `python task1_pagerank.py --verify`를 실행한 결과 7개 검사가 모두 통과했다.
 
-## Task 2
-Iterations rose from 14 at beta 0.50 to 24 at 0.99 because weaker teleportation mixes the walk more slowly as beta approaches 1.
-At beta 0.85, a 5x larger graph needed only 2 more iterations but about 7.7x the wall time: convergence rate is mathematical, while every iteration must process more nodes and edges.
-The top-10 membership stayed fixed, but its order first changed at beta 0.70, so a published ranking should disclose beta even when its leading set looks stable.
+## Task 2 · 수렴 비용
+- 1,200개 노드와 `tol=1e-10`에서 beta가 0.50→0.99로 증가하자 반복 횟수는 14→24회, 실행 시간은 0.075→0.241초로 늘었다. beta가 1에 가까울수록 텔레포트에 의한 혼합이 약해져 오차가 더 천천히 감소하기 때문이다.
+- beta=0.85에서 노드를 1,200개에서 6,000개로 5배 늘리자 반복 횟수는 20→22회에 그쳤지만 시간은 0.150→1.153초로 약 7.7배 증가했다. 또한 허용오차를 `1e-6`에서 `1e-10`으로 낮추면 12→20회가 되어 정확도 한 자리당 약 2회의 반복이 추가되었다.
+- 모든 beta에서 top-10에 포함된 페이지 집합은 같았지만, beta=0.70부터 `p00000`과 `p00004`의 순서가 바뀌었다. 따라서 상위 집합이 안정적이어도 세부 순위는 beta 선택의 영향을 받으므로 공개된 순위에는 beta 값을 함께 제시해야 한다.
 
-## Task 3
-I retained the input adjacency lists and two length-n rank vectors instead of an n-squared transition matrix, using O(n) extra floats while traversing O(E) stored links.
-Teleportation and dead-end mass are each one uniform scalar: compute it once per iteration, then use it to initialise every next-rank entry without a dense matrix.
-The worst difference from the dense answer was `1.18e-15`, caused only by floating-point additions occurring in a different order.
+## Task 3 · 희소 그래프 PageRank
+- `n²` 전이 행렬 대신 입력의 인접 리스트와 길이 `n`인 rank 벡터 두 개를 사용했다. 따라서 추가 실수 저장 공간은 O(n)이고, 매 반복에서 저장된 O(E)개의 링크만 순회한다.
+- 텔레포트 항과 dead-end rank는 모든 노드에 같은 값이므로 반복마다 각각 하나의 스칼라로 계산한 뒤 새 rank 벡터의 초깃값에 더했다. 모든 노드를 갱신하더라도 노드 쌍마다 값을 저장하는 밀집 행렬은 필요하지 않다.
+- `python bench.py --yours` 실행 결과 최대 오차는 `1.18e-15`로 허용치 `1e-9`보다 작았고, 기준 구현보다 약 `86.8배` 빠르며 메모리를 `599.0배` 적게 사용해 `strong` 판정을 받았다. 미세한 오차는 부동소수점 덧셈 순서의 차이에서 생긴다.
