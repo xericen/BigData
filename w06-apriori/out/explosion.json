@@ -1,0 +1,74 @@
+{
+  "runs": [
+    {
+      "support": 400,
+      "frequent_pairs": 249,
+      "peak_counters": 10585,
+      "seconds": 1.2819038999732584,
+      "peak_bytes": 1057191
+    },
+    {
+      "support": 200,
+      "frequent_pairs": 776,
+      "peak_counters": 58626,
+      "seconds": 2.143279500072822,
+      "peak_bytes": 6383220
+    },
+    {
+      "support": 100,
+      "frequent_pairs": 2244,
+      "peak_counters": 273701,
+      "seconds": 4.073764699976891,
+      "peak_bytes": 26393812
+    },
+    {
+      "support": 50,
+      "frequent_pairs": 6397,
+      "peak_counters": 820259,
+      "seconds": 7.082638500025496,
+      "peak_bytes": 102173836
+    },
+    {
+      "support": 25,
+      "frequent_pairs": 17045,
+      "peak_counters": 893456,
+      "seconds": 8.394105300074443,
+      "peak_bytes": 102173652
+    },
+    {
+      "support": 12,
+      "frequent_pairs": 43116,
+      "peak_counters": 893456,
+      "seconds": 8.203008800046518,
+      "peak_bytes": 102828839
+    },
+    {
+      "support": 6,
+      "frequent_pairs": 101938,
+      "peak_counters": 893456,
+      "seconds": 7.589878499973565,
+      "peak_bytes": 119356444
+    },
+    {
+      "support": 3,
+      "frequent_pairs": 250054,
+      "peak_counters": 893456,
+      "seconds": 9.573889000108466,
+      "peak_bytes": 156592388
+    },
+    {
+      "support": 1,
+      "frequent_pairs": 893456,
+      "peak_counters": 893456,
+      "seconds": 10.602683800039813,
+      "peak_bytes": 327134607
+    }
+  ],
+  "machine": {
+    "platform": "Windows-10-10.0.19045-SP0",
+    "processor": "Intel(R) Core(TM) i7-7700HQ CPU @ 2.80GHz",
+    "ram_bytes": 17024520192,
+    "python": "3.13.1",
+    "other_activity": "Visual Studio Code, Chrome, Windows Defender, and Codex were running"
+  }
+}

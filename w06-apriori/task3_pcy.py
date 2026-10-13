@@ -75,8 +75,44 @@ class YourAlgorithm:
         observation.md asks about it
     """
 
-    def __init__(self, support):
-        raise NotImplementedError("write your algorithm")
+    DEFAULT_BUCKETS = 100_003
+
+    def __init__(self, support, bucket_count=None):
+        self.support = support
+        self.bucket_count = bucket_count or self.DEFAULT_BUCKETS
+        self.peak_counters = 0
+
+    def _bucket(self, left, right):
+        """A deterministic hash for the integer item IDs used by the lab."""
+        return ((left * 1_000_003) ^ (right * 97_409)) % self.bucket_count
 
     def run(self, baskets):
-        raise NotImplementedError
+        item_counts = Counter()
+        bucket_counts = [0] * self.bucket_count
+
+        # Pass one counts items and hashes every observed pair into a fixed
+        # array.  No individual pair counters exist yet.
+        for basket in baskets:
+            items = sorted(basket)
+            item_counts.update(items)
+            for left, right in combinations(items, 2):
+                bucket_counts[self._bucket(left, right)] += 1
+
+        frequent_items = {item for item, count in item_counts.items()
+                          if count >= self.support}
+        frequent_buckets = bytearray(
+            count >= self.support for count in bucket_counts
+        )
+        # Release the integer bucket array before allocating pair counters.
+        del bucket_counts
+
+        pair_counts = Counter()
+        for basket in baskets:
+            items = sorted(basket & frequent_items)
+            for pair in combinations(items, 2):
+                if frequent_buckets[self._bucket(*pair)]:
+                    pair_counts[pair] += 1
+            self.peak_counters = max(self.peak_counters, len(pair_counts))
+
+        return {frozenset(pair): count for pair, count in pair_counts.items()
+                if count >= self.support}
