@@ -1,0 +1,4 @@
+1,200 nodes, 5,877 edges, density 0.4081%
+baseline: 4.30 s, 1,440,000 floats, rank sum 1.000000
+yours:    0.05 s, 2,404 floats, rank sum 1.000000, worst difference 1.18e-15
+result: ranks match within 1e-9; 86.8x faster; 599.0x less memory; strong

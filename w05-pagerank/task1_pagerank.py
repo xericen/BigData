@@ -41,7 +41,37 @@ def pagerank(graph, beta=0.85, iterations=100, tol=1e-10):
     you should call it converged. Return the ranks, and set `pagerank.iterations`
     to how many you actually used, because Task 2 measures that.
     """
-    raise NotImplementedError("implement PageRank")
+    nodes = list(graph)
+    n = len(nodes)
+    if n == 0:
+        pagerank.iterations = 0
+        return {}
+
+    ranks = {node: 1.0 / n for node in nodes}
+    teleport = (1.0 - beta) / n
+
+    for used in range(1, iterations + 1):
+        # A dead end acts as though it links uniformly to every page.  Its
+        # contribution and teleportation are both uniform, so each is a
+        # single scalar that is added while initialising the next vector.
+        dangling = sum(ranks[node] for node in nodes if not graph[node])
+        base = teleport + beta * dangling / n
+        new_ranks = {node: base for node in nodes}
+
+        for source in nodes:
+            outs = graph[source]
+            if outs:
+                share = beta * ranks[source] / len(outs)
+                for target in outs:
+                    new_ranks[target] += share
+
+        delta = sum(abs(new_ranks[node] - ranks[node]) for node in nodes)
+        ranks = new_ranks
+        if delta < tol:
+            break
+
+    pagerank.iterations = used if iterations else 0
+    return ranks
 
 
 def pagerank_no_teleport(graph, iterations=100):
@@ -50,7 +80,22 @@ def pagerank_no_teleport(graph, iterations=100):
     It exists so you can watch both failures happen rather than take them on
     trust. The harness checks that it really does fail.
     """
-    raise NotImplementedError("implement the broken version")
+    nodes = list(graph)
+    if not nodes:
+        return {}
+
+    ranks = {node: 1.0 / len(nodes) for node in nodes}
+    for _ in range(iterations):
+        new_ranks = {node: 0.0 for node in nodes}
+        for source in nodes:
+            outs = graph[source]
+            if outs:
+                share = ranks[source] / len(outs)
+                for target in outs:
+                    new_ranks[target] += share
+            # Deliberately do nothing for a dead end: its mass disappears.
+        ranks = new_ranks
+    return ranks
 
 
 # ------------------------------------------------------------------- harness

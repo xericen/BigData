@@ -86,10 +86,43 @@ class YourPageRank:
     """
 
     def __init__(self, beta=0.85, tol=1e-10, max_iter=100):
-        raise NotImplementedError("write your PageRank")
+        self.beta = beta
+        self.tol = tol
+        self.max_iter = max_iter
+        self._peak_floats = 0
+        self.iterations = 0
 
     def run(self, graph):
-        raise NotImplementedError
+        nodes = list(graph)
+        n = len(nodes)
+        if n == 0:
+            self._peak_floats = 0
+            return {}
+
+        ranks = {node: 1.0 / n for node in nodes}
+        # The two rank vectors dominate the extra floating-point storage.  The
+        # adjacency list belongs to the input and is never copied.
+        self._peak_floats = 2 * n + 4
+
+        for self.iterations in range(1, self.max_iter + 1):
+            dangling = sum(ranks[node] for node in nodes if not graph[node])
+            base = (1.0 - self.beta) / n + self.beta * dangling / n
+            new_ranks = {node: base for node in nodes}
+
+            for source in nodes:
+                outs = graph[source]
+                if outs:
+                    share = self.beta * ranks[source] / len(outs)
+                    for target in outs:
+                        new_ranks[target] += share
+
+            delta = sum(abs(new_ranks[node] - ranks[node])
+                        for node in nodes)
+            ranks = new_ranks
+            if delta < self.tol:
+                break
+
+        return ranks
 
     def memory_floats(self):
-        raise NotImplementedError
+        return self._peak_floats
